@@ -1,0 +1,40 @@
+name: Edit Video with FFmpeg
+
+on:
+  repository_dispatch:
+    types: [edit_video]
+
+jobs:
+  edit-video:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg python3-pip
+          pip install openai-whisper
+      
+      - name: Download video
+        run: |
+          wget -O raw_video.mp4 "${{ github.event.client_payload.video_url }}"
+      
+      - name: Extract and transcribe audio
+        run: |
+          ffmpeg -i raw_video.mp4 -q:a 0 -map a audio.wav
+          whisper audio.wav --model base --output_format srt
+      
+      - name: Add captions to video
+        run: |
+          ffmpeg -i raw_video.mp4 \
+            -vf "subtitles=audio.srt:force_style='FontSize=20,PrimaryColour=&HFFFFFF&'" \
+            -c:a copy \
+            edited_video.mp4
+      
+      - name: Upload to workflow artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: edited-video
+          path: edited_video.mp4
