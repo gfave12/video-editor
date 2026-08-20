@@ -1,9 +1,13 @@
 name: Edit Video with FFmpeg
 
 on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: 'URL of the video to edit'
+        required: true
   repository_dispatch:
     types: [edit_video]
-
 jobs:
   edit-video:
     runs-on: ubuntu-latest
